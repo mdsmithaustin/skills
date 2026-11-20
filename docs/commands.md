@@ -148,6 +148,21 @@ npx skills ls -g
 npx skills ls -a claude-code -a cursor
 ```
 
+## `skills doctor`
+
+Diagnose why an installed skill might be skipped or listed incorrectly. The command checks the selected agent's skill directories and the shared installation for the current project. Use `--global` to inspect your global installation.
+
+```bash
+npx skills doctor --agent codex
+npx skills doctor --agent claude-code --global --agent-version 2.1.316 --json
+```
+
+Doctor checks installation paths, directory links, `SKILL.md` casing, duplicate names, and description limits. Each finding gives the path, observed problem, predicted effect, and a fix. Doctor reads the installation offline. Findings are advisory and the command exits successfully when the scan completes.
+
+The loader profiles cover Codex 0.166.0 and Claude Code 2.1.316. Codex shortens its listing after 1,024 description code points. Claude Code uses a 1,536-code-point limit for the description and `when_to_use` together. The rules are based on the published [SkillEvaluator harness checks](https://docs.nvidia.com/skills/skillevaluator/harness-check) and [versioned profiles](https://github.com/NVIDIA/SkillEvaluator/tree/v1.0.1/src/skillevaluator/harness/profiles).
+
+By default, predictions refer to the version printed in the report. Pass `--agent-version` to check your own version. An unverified version, agent, or rule yields an `unknown` prediction. Use `--json` for the same findings with stable `ruleId` values and the `verifiedVersion` behind each prediction.
+
 ## `skills find`
 
 Search for skills interactively or by keyword.
