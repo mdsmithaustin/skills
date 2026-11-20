@@ -7,6 +7,7 @@ import { runAdd, parseAddOptions, initTelemetry } from './add.ts';
 import { runFind } from './find.ts';
 import { runInstallFromLock } from './install.ts';
 import { runList } from './list.ts';
+import { runDoctor } from './doctor.ts';
 import { InvalidLocalLockError } from './local-lock.ts';
 import { removeCommand, parseRemoveOptions } from './remove.ts';
 import { runSync, parseSyncOptions } from './sync.ts';
@@ -154,7 +155,15 @@ ${BOLD}Manage Skills:${RESET}
                        Generate a prompt for using one skill without installing it
   remove [skills]      Remove installed skills
   list, ls             List installed skills
+  doctor --agent <name>
+                       Diagnose installed skills
   find [query]         Search for skills interactively
+
+${BOLD}Doctor Options:${RESET}
+  -a, --agent <name>     Select the agent to inspect
+  --agent-version <v>   Check predictions against this loader version
+  -g, --global           Inspect global instead of project skills
+  --json                 Print findings as JSON
 
 ${BOLD}Find Options:${RESET}
   --owner <owner>        Search only repositories from a GitHub owner
@@ -425,6 +434,9 @@ async function main(): Promise<void> {
     case 'list':
     case 'ls':
       await runList(restArgs);
+      break;
+    case 'doctor':
+      await runDoctor(restArgs);
       break;
     case 'check':
       await runUpdate(restArgs, 'check');

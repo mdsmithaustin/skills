@@ -45,6 +45,7 @@ private repositories, and all options.
 | --------------------------------- | -------------------------------- |
 | `npx skills find [query]`         | Search for skills                |
 | `npx skills list`                 | List installed skills            |
+| [Doctor from this checkout](docs/commands.md#skills-doctor) | Diagnose installed skills |
 | `npx skills use <source>@<skill>` | Use one skill without installing |
 | `npx skills check`                | Check for available updates      |
 | `npx skills update [skills...]`   | Update installed skills          |
