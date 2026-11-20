@@ -150,16 +150,26 @@ npx skills ls -a claude-code -a cursor
 
 ## `skills doctor`
 
-Diagnose why an installed skill might be skipped or listed incorrectly. The command checks the selected agent's skill directories and the shared installation for the current project. Use `--global` to inspect your global installation.
+Diagnose why an installed skill might be skipped or listed incorrectly. Build the CLI in this checkout before running Doctor.
 
 ```bash
-npx skills doctor --agent codex
-npx skills doctor --agent claude-code --global --agent-version 2.1.316 --json
+skills_checkout=/absolute/path/to/this/checkout
+pnpm --dir "$skills_checkout" install --frozen-lockfile
+pnpm --dir "$skills_checkout" build
 ```
 
-Doctor checks installation paths, directory links, `SKILL.md` casing, duplicate names, and description limits. Each finding gives the path, observed problem, predicted effect, and a fix. Doctor reads the installation offline. Findings are advisory and the command exits successfully when the scan completes.
+From the project you want to inspect, run the built CLI. Use `--global` to inspect your global installation.
 
-The loader profiles cover Codex 0.166.0 and Claude Code 2.1.316. Codex shortens its listing after 1,024 description code points. Claude Code uses a 1,536-code-point limit for the description and `when_to_use` together. The rules are based on the published [SkillEvaluator harness checks](https://docs.nvidia.com/skills/skillevaluator/harness-check) and [versioned profiles](https://github.com/NVIDIA/SkillEvaluator/tree/v1.0.1/src/skillevaluator/harness/profiles).
+```bash
+node "$skills_checkout/bin/cli.mjs" doctor --agent codex
+node "$skills_checkout/bin/cli.mjs" doctor --agent claude-code --global --agent-version 2.1.316 --json
+```
+
+Doctor checks the selected agent's skill directories and compares them with the skills shown by `skills list` in the selected scope. It reports missing agent paths, broken directory links, `SKILL.md` casing, duplicate names, and description limits. For a Claude Code project scan, it also checks whether a distinct global copy takes precedence over a project skill.
+
+Each finding gives the path, observed problem, predicted effect, and a fix. Doctor reads the installation offline. A completed scan exits successfully even when it reports findings.
+
+The loader profiles cover Codex 0.166.0 and Claude Code 2.1.316. Codex checks visible skill directories up to six levels below its skills roots. It shortens its listing after 1,024 description code points. Claude Code uses a 1,536-code-point limit for the description and `when_to_use` together. The rules come from the published [SkillEvaluator harness checks](https://docs.nvidia.com/skills/skillevaluator/harness-check) and [versioned profiles](https://github.com/NVIDIA/SkillEvaluator/tree/v1.0.1/src/skillevaluator/harness/profiles).
 
 By default, predictions refer to the version printed in the report. Pass `--agent-version` to check your own version. An unverified version, agent, or rule yields an `unknown` prediction. Use `--json` for the same findings with stable `ruleId` values and the `verifiedVersion` behind each prediction.
 

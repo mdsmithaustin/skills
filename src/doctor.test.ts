@@ -230,4 +230,109 @@ describe('skills doctor', () => {
       findings: [{ ruleId: 'manifest-missing', path: windsurf, effect: 'unknown' }],
     });
   });
+  it('finds a missing Codex installation for a copy listed under another agent', () => {
+    addFixture('claude-only', 'Use this skill.', '--agent', 'claude-code', '--copy');
+    const listed = runCli(['list', '--json'], project, env);
+    expect(listed.exitCode, listed.stderr).toBe(0);
+    const path = join(project, '.claude/skills/claude-only');
+    expect(JSON.parse(listed.stdout)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'claude-only', path })])
+    );
+    expect(doctor('codex').findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'agent-path-missing',
+        path,
+        effect: 'not_loaded',
+        fix: expect.stringContaining('--agent codex'),
+      }),
+    ]);
+    expect(doctor('claude-code').findings).toEqual([]);
+  });
+
+  it('checks the manifest name of a matching Claude Code directory link', () => {
+    addFixture('expected', 'Use this skill.', '--agent', 'codex', 'claude-code');
+    const link = join(project, '.claude/skills/expected');
+    const foreign = join(sandbox, 'foreign');
+    writeSkill(foreign, 'different-skill', 'Use a different skill.');
+    rmSync(link);
+    symlinkSync(foreign, link, 'junction');
+    expect(doctor('claude-code').findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'agent-path-missing',
+        path: join(project, '.agents/skills/expected'),
+        effect: 'not_loaded',
+      }),
+    ]);
+  });
+
+  it('checks visible Codex manifests through depth six, including nested skills', () => {
+    const root = join(project, '.agents/skills');
+    const group = join(root, 'group');
+    const atLimit = writeSkill(join(group, 'd2/d3/d4/d5/d6'), 'at-limit', 'a'.repeat(1025));
+    writeSkill(join(group, 'd2/d3/d4/d5/d6/d7'), 'too-deep', 'a'.repeat(1025));
+    writeSkill(join(root, '.hidden'), 'hidden', 'a'.repeat(1025));
+    writeSkill(join(group, 'parent'), 'parent', 'Use parent.');
+    const nested = writeSkill(join(group, 'parent/child'), 'child', 'a'.repeat(1025));
+    expect(doctor('codex').findings).toEqual([
+      expect.objectContaining({ ruleId: 'description-too-long', path: atLimit }),
+      expect.objectContaining({ ruleId: 'description-too-long', path: nested }),
+      expect.objectContaining({
+        ruleId: 'directory-hidden',
+        path: join(root, '.hidden'),
+        effect: 'not_loaded',
+      }),
+    ]);
+  });
+
+  it('reports a distinct global Claude Code copy only on the shadowed project path', () => {
+    addFixture('same-skill', 'Use this skill.', '--agent', 'claude-code', '--copy');
+    addFixture(
+      'same-skill',
+      'Use the global skill.',
+      '--agent',
+      'claude-code',
+      '--global',
+      '--copy'
+    );
+    const path = join(project, '.claude/skills/same-skill');
+    const globalPath = join(home, '.claude/skills/same-skill');
+    expect(doctor('claude-code').findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'global-name-shadow',
+        path,
+        problem: expect.stringContaining(globalPath),
+        effect: 'shadowed_by_global',
+        verifiedVersion: '2.1.316',
+      }),
+    ]);
+    expect(doctor('claude-code', '--global').findings).toEqual([]);
+    expect(doctor('claude-code', '--agent-version', '2.1.327').findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'global-name-shadow',
+        path,
+        effect: 'unknown',
+        verifiedVersion: null,
+      }),
+    ]);
+
+    rmSync(path, { recursive: true });
+    symlinkSync(globalPath, path, 'junction');
+    expect(doctor('claude-code').findings).toEqual([]);
+  });
+
+  it('does not predict a load failure for a broken link outside the active Claude Code root', () => {
+    addFixture('healthy-copy', 'Use this skill.', '--agent', 'claude-code', '--copy');
+    const shared = join(project, '.agents/skills');
+    mkdirSync(shared, { recursive: true });
+    const path = join(shared, 'healthy-copy');
+    symlinkSync(join(sandbox, 'absent'), path, 'junction');
+    expect(doctor('claude-code').findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'directory-link-broken',
+        path,
+        effect: 'unknown',
+        verifiedVersion: null,
+      }),
+    ]);
+  });
 });
