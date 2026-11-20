@@ -1282,7 +1282,7 @@ export async function listInstalledSkills(
 
         // Check if SKILL.md exists
         try {
-          await stat(skillMdPath);
+          if (!(await stat(skillMdPath)).isFile()) continue;
         } catch {
           // SKILL.md doesn't exist, skip this directory
           continue;
@@ -1368,7 +1368,7 @@ export async function listInstalledSkills(
 
                 try {
                   const candidateSkillMd = join(candidateDir, 'SKILL.md');
-                  await stat(candidateSkillMd);
+                  if (!(await stat(candidateSkillMd)).isFile()) continue;
                   const candidateSkill = await parseSkillMd(candidateSkillMd);
                   if (candidateSkill && candidateSkill.name === skill.name) {
                     found = true;

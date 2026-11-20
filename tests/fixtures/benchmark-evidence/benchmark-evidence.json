@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "skill_name": "materialize-bench",
+  "skills": [
+    {
+      "name": "materialize-demo",
+      "digest_scheme": "skill-tree-sha256-v2",
+      "digest": "254b652604373da2e54ba8c665b0e8ae88e93819e8d6d6c428891d4f175934dc"
+    }
+  ],
+  "dataset_digest": "sha256:71e22dde03375ffea25f3d1ca97d3b72529f3382c244a094b5def66a4a4d2f7d",
+  "agent": "codex",
+  "model": "offline-model",
+  "baseline_outcome_rate": 0.0,
+  "with_skill_outcome_rate": 1.0,
+  "lift_interval": null,
+  "coverage": {
+    "complete_cases": 2,
+    "planned_cases": 2
+  }
+}
