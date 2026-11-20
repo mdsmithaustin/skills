@@ -175,6 +175,21 @@ The loader profiles cover Codex 0.166.0 and Claude Code 2.1.316. Codex shortens 
 
 By default, predictions refer to the version printed in the report. Pass `--agent-version` to check your own version. An unverified version, agent, or rule yields an `unknown` prediction. Use `--json` for the same findings with stable `ruleId` values and the `verifiedVersion` behind each prediction.
 
+## `skills evidence`
+
+Compare a saved benchmark result with an installed skill. Build the CLI as shown for [`skills doctor`](#skills-doctor). From the project containing the installation, set `evidence_file` to the path of an exported `benchmark-evidence.json` and `skill_name` to the installed skill's `SKILL.md` name.
+
+```bash
+node "$skills_checkout/bin/cli.mjs" evidence "$skill_name" "$evidence_file"
+node "$skills_checkout/bin/cli.mjs" evidence "$skill_name" "$evidence_file" --global --json
+```
+
+The command uses the installed path reported by `skills list` in the selected scope. It accepts a local path or a local `file:` URL and runs offline. Keep the evidence file outside the skill directory. The digest covers the manifest and every bundled file, including reference files. A link at the root of the installed skill directory can resolve to its target. Links and special files inside the tree make the digest unverifiable.
+
+`match` means the installed bytes match the evaluated snapshot. `changed` means the installed digest differs. `unknown` covers cases like missing or unsupported digests, missing installations, and unreadable trees. The report includes the saved dataset, agent, model, outcome rates, lift interval when available, and complete and planned case counts. Each status exits successfully. An unreadable or invalid JSON file exits with an error.
+
+Use `--json` for a versioned comparison with `identity.status`, `identity.reason`, both digests when available, and the saved metrics in `benchmark`. The evidence member comes from `skills[].name`. The benchmark name can differ from the name in `SKILL.md`.
+
 ## `skills find`
 
 Search for skills interactively or by keyword.
